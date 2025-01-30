@@ -10,6 +10,18 @@ public class CertificateInfo {
   private Date validTo;
   private String serialNumber;
 
+  public CertificateInfo() {
+  }
+
+  public CertificateInfo(String subject, String issuer, Date validFrom, Date validTo,
+      String serialNumber) {
+    this.subject = subject;
+    this.issuer = issuer;
+    this.validFrom = validFrom;
+    this.validTo = validTo;
+    this.serialNumber = serialNumber;
+  }
+
   public String getSubject() {
     return subject;
   }

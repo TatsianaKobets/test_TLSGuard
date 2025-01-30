@@ -5,6 +5,11 @@ public class Website {
   private String url;
   private String schedule;
 
+  public Website() {
+  }
+  public Website(int id, String url, String schedule) {
+  }
+
   public int getId() {
     return id;
   }
