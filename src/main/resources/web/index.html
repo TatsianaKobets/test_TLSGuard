@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>TLS Certificate Monitor</title>
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+<div class="container">
+  <h1>Monitor TLS Certificates</h1>
+
+  <div class="add-form">
+    <input type="text" id="url" placeholder="Enter URL (e.g. https://example.com)">
+    <select id="schedule">
+      <option value="hourly">Every Hour</option>
+      <option value="daily">Daily</option>
+      <option value="weekly">Weekly</option>
+    </select>
+    <button onclick="addWebsite()">Add Website</button>
+  </div>
+
+  <div class="results">
+    <h2>Monitoring List</h2>
+    <table id="websites">
+      <thead>
+      <tr>
+        <th>URL</th>
+        <th>Schedule</th>
+        <th>Last Check</th>
+        <th>Valid Until</th>
+      </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </div>
+</div>
+
+<script>
+  // Загрузка данных при старте
+  document.addEventListener('DOMContentLoaded', loadWebsites);
+
+  async function loadWebsites() {
+    const response = await fetch('/api/websites');
+    const websites = await response.json();
+
+    const tbody = document.querySelector('#websites tbody');
+    tbody.innerHTML = '';
+
+    websites.forEach(website => {
+      const row = `
+                    <tr>
+                        <td>${website.url}</td>
+                        <td>${website.schedule}</td>
+                        <td>${website.lastChecked || 'N/A'}</td>
+                        <td>${website.validTo || 'N/A'}</td>
+                    </tr>`;
+      tbody.innerHTML += row;
+    });
+  }
+
+  async function addWebsite() {
+    const url = document.getElementById('url').value;
+    const schedule = document.getElementById('schedule').value;
+
+    await fetch('/api/websites', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ url, schedule })
+    });
+
+    loadWebsites();
+  }
+</script>
+</body>
+</html>
