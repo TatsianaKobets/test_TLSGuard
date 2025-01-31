@@ -4,7 +4,6 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
-
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -13,6 +12,7 @@ import org.example.testtlsguard.dao.WebsiteDao;
 import org.example.testtlsguard.model.Website;
 
 public class ApiHandler implements HttpHandler {
+
   private final WebsiteDao websiteDao = new WebsiteDao();
   private static final ObjectMapper objectMapper = new ObjectMapper();
 

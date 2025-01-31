@@ -35,8 +35,11 @@
 </div>
 
 <script>
-  // Загрузка данных при старте
-  document.addEventListener('DOMContentLoaded', loadWebsites);
+  function formatTimestamp(timestamp) {
+    if (!timestamp) return 'N/A';
+    const date = new Date(timestamp);
+    return date.toLocaleString(); // Форматируем дату в локальном формате
+  }
 
   async function loadWebsites() {
     const response = await fetch('/api/websites');
@@ -47,12 +50,12 @@
 
     websites.forEach(website => {
       const row = `
-                    <tr>
-                        <td>${website.url}</td>
-                        <td>${website.schedule}</td>
-                        <td>${website.lastChecked || 'N/A'}</td>
-                        <td>${website.validTo || 'N/A'}</td>
-                    </tr>`;
+            <tr>
+                <td>${website.url}</td>
+                <td>${website.schedule}</td>
+                <td>${formatTimestamp(website.lastChecked)}</td>
+                <td>${formatTimestamp(website.validTo)}</td>
+            </tr>`;
       tbody.innerHTML += row;
     });
   }
