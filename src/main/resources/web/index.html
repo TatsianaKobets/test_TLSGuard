@@ -11,11 +11,13 @@
   <div class="add-form">
     <input type="text" id="url" placeholder="Enter URL (e.g. https://example.com)">
     <select id="schedule">
+      <option value="minutely">Every Minute</option> <!-- Новая опция -->
       <option value="hourly">Every Hour</option>
       <option value="daily">Daily</option>
       <option value="weekly">Weekly</option>
     </select>
     <button onclick="addWebsite()">Add Website</button>
+    <button class="red" onclick="resetWebsites()">Reset All Websites</button>
   </div>
 
   <div class="results">
@@ -36,7 +38,9 @@
 
 <script>
   function formatTimestamp(timestamp) {
-    if (!timestamp) return 'N/A';
+    if (!timestamp) {
+      return 'N/A';
+    }
     const date = new Date(timestamp);
     return date.toLocaleString(); // Форматируем дату в локальном формате
   }
@@ -61,20 +65,38 @@
   }
 
   async function addWebsite() {
-    const url = document.getElementById('url').value;
+    const url = document.getElementById('url').value.trim();
     const schedule = document.getElementById('schedule').value;
+
+    if (!url) {
+      alert("URL is required.");
+      return;
+    }
 
     await fetch('/api/websites', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ url, schedule })
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({url, schedule})
     });
 
     loadWebsites();
   }
 
-  // Обновление списка сайтов каждые 60 секунд
-  setInterval(loadWebsites, 60000);
+  async function resetWebsites() {
+    const confirmation = confirm("Are you sure you want to reset all websites?");
+    if (!confirmation) {
+      return;
+    }
+
+    await fetch('/api/websites/reset', {
+      method: 'DELETE'
+    });
+
+    loadWebsites();
+  }
+
+  // Обновление списка сайтов каждые 20 секунд
+  setInterval(loadWebsites, 20000);
 
   // Первоначальная загрузка сайтов при загрузке страницы
   loadWebsites();

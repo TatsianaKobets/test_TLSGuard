@@ -22,6 +22,8 @@ public class ApiHandler implements HttpHandler {
       handleGet(exchange);
     } else if ("POST".equals(exchange.getRequestMethod())) {
       handlePost(exchange);
+    } else if ("DELETE".equals(exchange.getRequestMethod())) {
+      handleDelete(exchange);
     }
   }
 
@@ -57,5 +59,10 @@ public class ApiHandler implements HttpHandler {
 
   private Website parseJsonToWebsite(String json) throws IOException {
     return objectMapper.readValue(json, Website.class);
+  }
+
+  private void handleDelete(HttpExchange exchange) throws IOException {
+    websiteDao.clearAllWebsites();
+    sendResponse(exchange, "{\"status\":\"ok\"}");
   }
 }

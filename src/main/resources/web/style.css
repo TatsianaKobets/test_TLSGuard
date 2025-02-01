@@ -25,10 +25,25 @@ input, select, button {
 }
 
 button {
-  background: #007bff;
+  background: #007bff; /* Цвет для остальных кнопок */
   color: white;
   border: none;
   cursor: pointer;
+}
+
+button:hover {
+  background: #0056b3; /* Более темный синий цвет при наведении */
+}
+
+button.red {
+  background: #dc3545; /* Красный цвет для кнопки удаления */
+  color: white;
+  border: none;
+  cursor: pointer;
+}
+
+button.red:hover {
+  background: #c82333; /* Более темный красный при наведении */
 }
 
 .results {
