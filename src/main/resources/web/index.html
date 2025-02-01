@@ -72,6 +72,12 @@
 
     loadWebsites();
   }
+
+  // Обновление списка сайтов каждые 60 секунд
+  setInterval(loadWebsites, 60000);
+
+  // Первоначальная загрузка сайтов при загрузке страницы
+  loadWebsites();
 </script>
 </body>
 </html>
