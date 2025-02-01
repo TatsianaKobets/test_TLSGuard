@@ -60,6 +60,7 @@ public class ApiHandler implements HttpHandler {
   private void handlePost(HttpExchange exchange) throws IOException {
     InputStream is = exchange.getRequestBody();
     String json = new String(is.readAllBytes());
+    System.out.println("Received JSON: " + json); // Логирование полученного JSON
     Website website = parseJsonToWebsite(json);
     websiteDao.addWebsite(website);
     sendResponse(exchange, "{\"status\":\"ok\"}", 200);

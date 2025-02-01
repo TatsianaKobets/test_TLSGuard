@@ -52,6 +52,7 @@
         throw new Error('Network response was not ok');
       }
       const websites = await response.json();
+      console.log("Websites received:", websites);
       const tbody = document.querySelector('#websites tbody');
       tbody.innerHTML = '';
       websites.forEach(website => {
@@ -99,11 +100,7 @@
 
     loadWebsites();
   }
-
-  // Обновление списка сайтов каждые 20 секунд
   setInterval(loadWebsites, 20000);
-
-  // Первоначальная загрузка сайтов при загрузке страницы
   loadWebsites();
 </script>
 </body>

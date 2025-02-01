@@ -14,7 +14,11 @@ import org.example.testtlsguard.model.Website;
 public class WebsiteDao {
 
   private static final String JDBC_URL = "jdbc:h2:~/tls_checker_db";
-  private static final String CREATE_TABLE_SQL = " CREATE TABLE IF NOT EXISTS websites ( id INT AUTO_INCREMENT PRIMARY KEY, url VARCHAR(255) NOT NULL UNIQUE, schedule VARCHAR(50) NOT NULL, last_checked TIMESTAMP)";
+  private static final String CREATE_TABLE_SQL = "CREATE TABLE IF NOT EXISTS websites ("
+      + "id INT AUTO_INCREMENT PRIMARY KEY, "
+      + "url VARCHAR(255) NOT NULL UNIQUE, "
+      + "schedule VARCHAR(50) NOT NULL, "
+      + "last_checked TIMESTAMP)";
 
   private static final String INSERT_SQL = "INSERT INTO websites(url, schedule) VALUES(?, ?)";
   private static final String SELECT_ALL_SQL =
@@ -27,8 +31,19 @@ public class WebsiteDao {
   public WebsiteDao() {
     try (Connection conn = DriverManager.getConnection(JDBC_URL);
         Statement stmt = conn.createStatement()) {
+      System.out.println("Connected to database: " + JDBC_URL); // Логирование
       stmt.execute(CREATE_TABLE_SQL);
+      System.out.println("Table 'websites' created or already exists.");
+
+      // Проверка структуры таблицы
+      ResultSet rs = conn.getMetaData().getColumns(null, null, "WEBSITES", null);
+      while (rs.next()) {
+        String columnName = rs.getString("COLUMN_NAME");
+        String columnType = rs.getString("TYPE_NAME");
+        System.out.println("Column: " + columnName + ", Type: " + columnType);
+      }
     } catch (SQLException e) {
+      System.err.println("Error connecting to database: " + e.getMessage()); // Логирование ошибки
       e.printStackTrace();
     }
   }
@@ -38,6 +53,8 @@ public class WebsiteDao {
       System.out.println("URL is required.");
       return;
     }
+    System.out.println(
+        "Adding website: " + website.getUrl() + ", Schedule: " + website.getSchedule());
 
     try (Connection conn = DriverManager.getConnection(JDBC_URL);
         PreparedStatement pstmtCheck = conn.prepareStatement(CHECK_Sql)) {
@@ -46,16 +63,24 @@ public class WebsiteDao {
       ResultSet rs = pstmtCheck.executeQuery();
 
       if (rs.next()) {
-        System.out.println("Website with URL " + website.getUrl() + " already exists.");
+        int existingId = rs.getInt("id");
+        System.out.println(
+            "Website with URL " + website.getUrl() + " already exists. ID: " + existingId);
         return;
       }
-
-      try (PreparedStatement pstmtInsert = conn.prepareStatement(INSERT_SQL)) {
+     try (PreparedStatement pstmtInsert = conn.prepareStatement(INSERT_SQL)) {
         pstmtInsert.setString(1, website.getUrl());
         pstmtInsert.setString(2, website.getSchedule());
-        pstmtInsert.executeUpdate();
+        int rowsInserted = pstmtInsert.executeUpdate();
+        System.out.println("Rows inserted: " + rowsInserted); // Логирование
+        if (rowsInserted > 0) {
+          System.out.println("Website added: " + website.getUrl());
+        } else {
+          System.out.println("Failed to add website: " + website.getUrl());
+        }
       }
     } catch (SQLException e) {
+      System.err.println("Error adding website: " + e.getMessage()); // Логирование ошибки
       e.printStackTrace();
     }
   }
@@ -66,6 +91,7 @@ public class WebsiteDao {
         Statement stmt = conn.createStatement();
         ResultSet rs = stmt.executeQuery(SELECT_ALL_SQL)) {
 
+      System.out.println("Executing query: " + SELECT_ALL_SQL); // Логирование
       while (rs.next()) {
         Website website = new Website(
             rs.getInt("id"),
@@ -76,7 +102,9 @@ public class WebsiteDao {
         website.setValidTo(rs.getTimestamp("valid_to"));
         websites.add(website);
       }
+      System.out.println("Websites fetched from DB: " + websites.size()); // Логирование
     } catch (SQLException e) {
+      System.err.println("Error fetching websites: " + e.getMessage()); // Логирование ошибки
       e.printStackTrace();
     }
     return websites;

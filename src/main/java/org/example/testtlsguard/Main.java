@@ -12,19 +12,13 @@ public class Main {
   //ToDo убрать комментарии
   //ToDo вынести переменные с бд в константы и отдельный класс
 
-  public static void main(String[] args)
-      throws Exception {
-    // Удаляем всю базу данных перед созданием таблиц
+  public static void main(String[] args) throws Exception {
     DatabaseUtil.dropDatabase();
-
-    WebsiteDao websiteDao = new WebsiteDao(); // создание таблицы происходит в конструкторе
+    WebsiteDao websiteDao = new WebsiteDao();
     CertificateDao certificateDao = new CertificateDao(); // создание таблицы происходит в конструкторе
-
-// Запуск сервера на порту 8080
     Server server = new Server(8080);
     server.start();
-
-// Инициализация планировщика проверок
+    System.out.println("Server started on port 8080");
     CertCheckScheduler scheduler = new CertCheckScheduler(websiteDao, certificateDao);
     scheduler.start();
   }
