@@ -9,17 +9,9 @@ public class CertificateInfo {
   private Date validFrom;
   private Date validTo;
   private String serialNumber;
+  private String pem;
 
   public CertificateInfo() {
-  }
-
-  public CertificateInfo(String subject, String issuer, Date validFrom, Date validTo,
-      String serialNumber) {
-    this.subject = subject;
-    this.issuer = issuer;
-    this.validFrom = validFrom;
-    this.validTo = validTo;
-    this.serialNumber = serialNumber;
   }
 
   public String getSubject() {
@@ -60,5 +52,13 @@ public class CertificateInfo {
 
   public void setSerialNumber(String serialNumber) {
     this.serialNumber = serialNumber;
+  }
+
+  public String getPem() {
+    return pem;
+  }
+
+  public void setPem(String pem) {
+    this.pem = pem;
   }
 }

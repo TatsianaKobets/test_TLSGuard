@@ -6,6 +6,11 @@ import org.example.testtlsguard.scheduler.CertCheckScheduler;
 import org.example.testtlsguard.util.DatabaseUtil;
 
 public class Main {
+//ToDo добавить всплывающее окно с сообщением о том что этот урл уже есть в списке
+  //ToDo добавить логирование
+  //ToDo добавить валидацию url
+  //ToDo убрать комментарии
+  //ToDo вынести переменные с бд в константы и отдельный класс
 
   public static void main(String[] args)
       throws Exception {

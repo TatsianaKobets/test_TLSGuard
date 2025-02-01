@@ -1,13 +1,18 @@
 package org.example.testtlsguard.scheduler;
 
+import java.io.IOException;
+import java.net.URL;
 import java.security.cert.Certificate;
 import java.security.cert.CertificateExpiredException;
 import java.security.cert.CertificateNotYetValidException;
 import java.security.cert.X509Certificate;
 import java.sql.Timestamp;
+import java.util.Base64;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import javax.net.ssl.HttpsURLConnection;
+import javax.net.ssl.SSLException;
 import org.example.testtlsguard.dao.CertificateDao;
 import org.example.testtlsguard.dao.WebsiteDao;
 import org.example.testtlsguard.model.CertificateInfo;
@@ -39,14 +44,22 @@ public class CertCheckScheduler {
         return;
       }
 
-      // Проверяем, нужно ли выполнять проверку для этого сайта
       if (shouldCheckNow(website)) {
         try {
-          X509Certificate cert = CertUtils.retrieveCertificate(website.getUrl());
-          cert.checkValidity();
+          X509Certificate cert = CertUtils.retrieveCertificate(
+              website.getUrl());// Получаем сертификат
+          cert.checkValidity(); // Проверяем валидность сертификата
+          // Преобразуем сертификат в PEM
+          String pem = convertToPem(cert);
 
-          CertificateInfo certInfo = CertUtils.parseCertificate(cert);
+          // Создаем объект CertificateInfo и сохраняем PEM
+          CertificateInfo certInfo = CertUtils.parseCertificate(
+              cert);
+          certInfo.setPem(pem);// Сохраняем PEM
           certificateDao.saveCertificate(website.getId(), certInfo);
+
+          // Передаем JSON на бэкенд
+          sendCertificateToBackend(certInfo);
 
           // Обновляем время последней проверки
           website.setLastChecked(new java.sql.Timestamp(System.currentTimeMillis()));
@@ -63,6 +76,7 @@ public class CertCheckScheduler {
       }
     });
   }
+
   private boolean shouldCheckNow(Website website) {
     Timestamp lastChecked = website.getLastChecked();
     if (lastChecked == null) {
@@ -87,8 +101,50 @@ public class CertCheckScheduler {
     }
   }
 
-  private Certificate retrieveCertificate(String url) throws Exception {
-    // Реализация получения сертификата (опущена для краткости)
-    return null;
+  private X509Certificate retrieveCertificate(String url) throws Exception {
+    try {
+      // Создаем URL-объект
+      URL targetUrl = new URL(url);
+
+      // Открываем HTTPS-соединение
+      HttpsURLConnection connection = (HttpsURLConnection) targetUrl.openConnection();
+      connection.setConnectTimeout(5000); // Таймаут соединения
+      connection.setReadTimeout(5000);    // Таймаут чтения
+      connection.connect();
+
+      // Получаем сертификаты из соединения
+      Certificate[] certificates = connection.getServerCertificates();
+      if (certificates == null || certificates.length == 0) {
+        throw new SSLException("No certificates found for URL: " + url);
+      }
+
+      // Берем первый сертификат (обычно это сертификат сервера)
+      Certificate certificate = certificates[0];
+      if (certificate instanceof X509Certificate) {
+        return (X509Certificate) certificate;
+      } else {
+        throw new SSLException("The certificate is not an X509Certificate for URL: " + url);
+      }
+    } catch (IOException e) {
+      throw new Exception("Failed to retrieve certificate for URL: " + url, e);
+    }
+  }
+  private String convertToPem(X509Certificate certificate) throws Exception {
+    Base64.Encoder encoder = Base64.getMimeEncoder(64, System.lineSeparator().getBytes());
+    String encodedCert = encoder.encodeToString(certificate.getEncoded());
+    return "-----BEGIN CERTIFICATE-----" + System.lineSeparator() +
+        encodedCert + System.lineSeparator() +
+        "-----END CERTIFICATE-----";
+  }
+  private void sendCertificateToBackend(CertificateInfo certInfo) {
+    // Реализация отправки JSON на бэкенд
+    // Пример: отправляем через HTTP POST
+    String json = convertToJson(certInfo);
+    // Используйте вашу библиотеку для отправки HTTP-запроса
+  }
+
+  private String convertToJson(CertificateInfo certInfo) {
+    // Метод для преобразования CertificateInfo в JSON
+    return "{\"pem\": \"" + certInfo.getPem().replace("\n", "\\n") + "\"}";
   }
 }

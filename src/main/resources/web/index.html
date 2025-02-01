@@ -46,22 +46,27 @@
   }
 
   async function loadWebsites() {
-    const response = await fetch('/api/websites');
-    const websites = await response.json();
-
-    const tbody = document.querySelector('#websites tbody');
-    tbody.innerHTML = '';
-
-    websites.forEach(website => {
-      const row = `
-            <tr>
-                <td>${website.url}</td>
-                <td>${website.schedule}</td>
-                <td>${formatTimestamp(website.lastChecked)}</td>
-                <td>${formatTimestamp(website.validTo)}</td>
-            </tr>`;
-      tbody.innerHTML += row;
-    });
+    try {
+      const response = await fetch('/api/websites');
+      if (!response.ok) {
+        throw new Error('Network response was not ok');
+      }
+      const websites = await response.json();
+      const tbody = document.querySelector('#websites tbody');
+      tbody.innerHTML = '';
+      websites.forEach(website => {
+        const row = `
+                <tr>
+                    <td>${website.url}</td>
+                    <td>${website.schedule}</td>
+                    <td>${formatTimestamp(website.lastChecked)}</td>
+                    <td>${formatTimestamp(website.validTo)}</td>
+                </tr>`;
+        tbody.innerHTML += row;
+      });
+    } catch (error) {
+      console.error('Error loading websites:', error);
+    }
   }
 
   async function addWebsite() {
