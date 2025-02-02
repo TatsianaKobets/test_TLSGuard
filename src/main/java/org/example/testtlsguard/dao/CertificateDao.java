@@ -24,7 +24,10 @@ public class CertificateDao {
       + "    FOREIGN KEY (website_id) REFERENCES websites(id)\n"
       + ")";
 
-  private static final String INSERT_SQL =  "INSERT INTO certificates(website_id, subject, issuer, valid_from, valid_to, serial_number, pem) VALUES(?, ?, ?, ?, ?, ?, ?)";
+  private static final String INSERT_SQL = "INSERT INTO certificates("
+      + "website_id, subject, issuer, valid_from, valid_to, serial_number, pem)"
+      + " VALUES(?, ?, ?, ?, ?, ?, ?)";
+
   public CertificateDao() {
     try (Connection conn = DriverManager.getConnection(
         JDBC_URL); Statement stmt = conn.createStatement()) {

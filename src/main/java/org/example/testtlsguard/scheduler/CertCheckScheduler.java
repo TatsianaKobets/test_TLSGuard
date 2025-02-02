@@ -63,13 +63,20 @@ public class CertCheckScheduler {
             System.err.println("PEM is null for website ID: " + website.getId());
             return;
           }
+
           // Сохраняем сертификат в базу данных
           certificateDao.saveCertificate(website.getId(), certInfo);
           System.out.println("Certificate saved for website ID: " + website.getId());
 
           // Обновляем время последней проверки
           website.setLastChecked(new java.sql.Timestamp(System.currentTimeMillis()));
+          website.setValidTo(certInfo.getValidTo()); // Обновляем validTo
           websiteDao.updateLastChecked(website.getId(), website.getLastChecked());
+
+          if (website.getValidTo() != null) {
+System.out.println("Обновляем validTo в базе данных: " + website.getValidTo());
+          }
+              website.getValidTo(); // Обновляем validTo в базе данных
 
         } catch (CertificateExpiredException e) {
           System.err.println("Certificate expired for " + website.getUrl());
@@ -135,6 +142,7 @@ public class CertCheckScheduler {
       throw new Exception("Failed to retrieve certificate for URL: " + url, e);
     }
   }
+
   private String convertToPem(X509Certificate certificate) throws Exception {
     Base64.Encoder encoder = Base64.getMimeEncoder(64, System.lineSeparator().getBytes());
     String encodedCert = encoder.encodeToString(certificate.getEncoded());
@@ -142,6 +150,7 @@ public class CertCheckScheduler {
         encodedCert + System.lineSeparator() +
         "-----END CERTIFICATE-----";
   }
+
   private void sendCertificateToBackend(CertificateInfo certInfo) {
     // Реализация отправки JSON на бэкенд
     // Пример: отправляем через HTTP POST

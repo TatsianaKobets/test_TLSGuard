@@ -53,9 +53,9 @@ public class ApiHandler implements HttpHandler {
   }
 
   private void handleGet(HttpExchange exchange) throws IOException {
-    // Получение списка сайтов
     List<Website> websites = websiteDao.getAllWebsites();
     String response = convertToJson(websites);
+    System.out.println("Response: " + response);
     sendResponse(exchange, response, 200);
   }
 
@@ -86,9 +86,16 @@ public class ApiHandler implements HttpHandler {
     String json = new String(is.readAllBytes());
     try {
       CertificateInfo certInfo = parseJsonCertificate(json);
+
       // Сохраняем информацию о сертификате в базе данных
       certificateDao.saveCertificate(1, certInfo); // Используйте ваш DAO (websiteId = 1 для примера)
-      sendResponse(exchange, "{\"status\":\"ok\"}", 200);
+
+      // Перезагружаем данные из базы данных
+      List<Website> updatedWebsites = websiteDao.getAllWebsites();
+      String response = convertToJson(updatedWebsites);
+
+      // Отправляем обновленный JSON-ответ
+      sendResponse(exchange, response, 200);
     } catch (Exception e) {
       sendResponse(exchange, "{\"error\":\"" + e.getMessage() + "\"}", 400);
     }
@@ -106,7 +113,9 @@ public class ApiHandler implements HttpHandler {
   }
 
   private String convertToJson(List<Website> websites) throws JsonProcessingException {
-    return objectMapper.writeValueAsString(websites);
+    String json = objectMapper.writeValueAsString(websites);
+    System.out.println("JSON output: " + json); // Log the JSON output
+    return json;
   }
 
   private Website parseJsonToWebsite(String json) throws IOException {

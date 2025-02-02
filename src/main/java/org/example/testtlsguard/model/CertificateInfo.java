@@ -1,13 +1,14 @@
 package org.example.testtlsguard.model;
 
+import java.sql.Timestamp;
 import java.util.Date;
 
 public class CertificateInfo {
 
   private String subject;
   private String issuer;
-  private Date validFrom;
-  private Date validTo;
+  private Timestamp validFrom;
+  private Timestamp validTo;
   private String serialNumber;
   private String pem;
 
@@ -30,19 +31,19 @@ public class CertificateInfo {
     this.issuer = issuer;
   }
 
-  public Date getValidFrom() {
+  public Timestamp getValidFrom() {
     return validFrom;
   }
 
-  public void setValidFrom(Date validFrom) {
+  public void setValidFrom(Timestamp validFrom) {
     this.validFrom = validFrom;
   }
 
-  public Date getValidTo() {
+  public Timestamp getValidTo() {
     return validTo;
   }
 
-  public void setValidTo(Date validTo) {
+  public void setValidTo(Timestamp validTo) {
     this.validTo = validTo;
   }
 

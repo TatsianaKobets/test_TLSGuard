@@ -1,6 +1,7 @@
 package org.example.testtlsguard.model;
 
 import java.sql.Timestamp;
+import java.util.Date;
 
 public class Website {
 
@@ -35,6 +36,10 @@ public class Website {
 
   public void setLastChecked(Timestamp lastChecked) {
     this.lastChecked = lastChecked;
+  }
+
+  public Timestamp getValidTo() {
+    return validTo;
   }
 
   public void setValidTo(Timestamp validTo) {

@@ -3,6 +3,7 @@ package org.example.testtlsguard.util;
 import java.net.URL;
 import java.security.cert.Certificate;
 import java.security.cert.X509Certificate;
+import java.sql.Timestamp;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import javax.net.ssl.HttpsURLConnection;
@@ -15,13 +16,13 @@ public class CertUtils {
     CertificateInfo info = new CertificateInfo();
     info.setSubject(cert.getSubjectX500Principal().getName());
     info.setIssuer(cert.getIssuerX500Principal().getName());
-    info.setValidFrom(cert.getNotBefore());
-    info.setValidTo(cert.getNotAfter());
+    info.setValidFrom(new Timestamp(cert.getNotBefore().getTime()));
+    info.setValidTo(new Timestamp(cert.getNotAfter().getTime()));
     info.setSerialNumber(cert.getSerialNumber().toString(16));
     return info;
   }
 
-  private static String formatDate(Date date) {
+  private static String formatDate(Timestamp date) {
     return new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(date);
   }
 

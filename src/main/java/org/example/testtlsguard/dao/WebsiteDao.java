@@ -22,15 +22,16 @@ public class WebsiteDao {
 
   private static final String INSERT_SQL = "INSERT INTO websites(url, schedule) VALUES(?, ?)";
   private static final String SELECT_ALL_SQL =
-      "SELECT w.id, w.url, w.schedule, c.checked_at AS last_checked, c.valid_to\n"
-          + "FROM websites w\n"
-          + "LEFT JOIN (\n"
-          + "    SELECT website_id, MAX(checked_at) AS last_checked\n"
-          + "    FROM certificates\n"
-          + "    GROUP BY website_id\n"
-          + ") latest ON w.id = latest.website_id\n"
-          + "LEFT JOIN certificates c ON w.id = c.website_id AND c.checked_at = latest.last_checked\n"
-          + "ORDER BY w.id";
+      "SELECT w.id, w.url, w.schedule, c.checked_at AS last_checked, c.valid_to\n" +
+          "FROM websites w\n" +
+          "LEFT JOIN (\n" +
+          "    SELECT website_id, MAX(checked_at) AS last_checked\n" +
+          "    FROM certificates\n" +
+          "    GROUP BY website_id\n" +
+          ") latest ON w.id = latest.website_id\n" +
+          "LEFT JOIN certificates c ON w.id = c.website_id AND c.checked_at = latest.last_checked\n"
+          +
+          "ORDER BY w.id";
   private static final String CHECK_Sql = "SELECT id FROM websites WHERE url = ?";
 
   public WebsiteDao() {
@@ -73,7 +74,7 @@ public class WebsiteDao {
             "Website with URL " + website.getUrl() + " already exists. ID: " + existingId);
         return;
       }
-     try (PreparedStatement pstmtInsert = conn.prepareStatement(INSERT_SQL)) {
+      try (PreparedStatement pstmtInsert = conn.prepareStatement(INSERT_SQL)) {
         pstmtInsert.setString(1, website.getUrl());
         pstmtInsert.setString(2, website.getSchedule());
         int rowsInserted = pstmtInsert.executeUpdate();
@@ -105,6 +106,7 @@ public class WebsiteDao {
         );
         website.setLastChecked(rs.getTimestamp("last_checked"));
         Timestamp validTo = rs.getTimestamp("valid_to");
+        System.out.println("Valid to: " + validTo);
         if (!rs.wasNull()) { // Проверка на NULL
           website.setValidTo(validTo);
         }
@@ -143,6 +145,7 @@ public class WebsiteDao {
       e.printStackTrace();
     }
   }
+
   public boolean checkIfWebsiteExists(String url) {
     try (Connection conn = DriverManager.getConnection(JDBC_URL);
         PreparedStatement pstmtCheck = conn.prepareStatement(CHECK_Sql)) {

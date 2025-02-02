@@ -37,12 +37,6 @@
 </div>
 
 <script>
-  function formatValidTo(date) {
-    const dateParts = date.split(' ');
-    const dateStr = dateParts[0];
-    const timeStr = dateParts[1];
-    return `${dateStr} ${timeStr}`;
-  }
   function formatTimestamp(timestamp) {
     if (!timestamp) {
       return 'N/A';
@@ -53,30 +47,31 @@
     }
     return date.toLocaleString();
   }
+
   async function loadWebsites() {
-    try {
-      const response = await fetch('/api/websites');
-      if (!response.ok) {
-        throw new Error('Network response was not ok');
-      }
-      const text = await response.text();
-      const websites = JSON.parse(text);
-      console.log("Websites received:", websites);
-      const tbody = document.querySelector('#websites tbody');
-      tbody.innerHTML = '';
-      websites.forEach(website => {
-        const row = `
+      try {
+        const response = await fetch('/api/websites');
+        if (!response.ok) {
+          throw new Error('Network response was not ok');
+        }
+        const text = await response.text();
+        const websites = JSON.parse(text);
+        console.log("Websites received:", websites); // Log the received websites
+        const tbody = document.querySelector('#websites tbody');
+        tbody.innerHTML = '';
+        websites.forEach(website => {
+          const row = `
                 <tr>
                     <td>${website.url}</td>
                     <td>${website.schedule}</td>
                     <td>${formatTimestamp(website.lastChecked)}</td>
-                    <td>${formatTimestamp(website.validTo)}</td>
+                    <td>${formatTimestamp(website.validTo)}</td> <!-- Применяем formatTimestamp для validTo -->
                 </tr>`;
-        tbody.innerHTML += row;
-      });
-    } catch (error) {
-      console.error('Error loading websites:', error);
-    }
+          tbody.innerHTML += row;
+        });
+      } catch (error) {
+        console.error('Error loading websites:', error);
+      }
   }
 
   async function addWebsite() {
@@ -133,6 +128,7 @@
       alert("An error occurred while resetting websites");
     }
   }
+
   setInterval(loadWebsites, 20000);
   loadWebsites();
 </script>
