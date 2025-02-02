@@ -22,10 +22,15 @@ public class WebsiteDao {
 
   private static final String INSERT_SQL = "INSERT INTO websites(url, schedule) VALUES(?, ?)";
   private static final String SELECT_ALL_SQL =
-      "SELECT w.id, w.url, w.schedule, c.checked_at AS last_checked, c.valid_to " +
-          "FROM websites w " +
-          "LEFT JOIN certificates c ON w.id = c.website_id " +
-          "ORDER BY w.id";
+      "SELECT w.id, w.url, w.schedule, c.checked_at AS last_checked, c.valid_to\n"
+          + "FROM websites w\n"
+          + "LEFT JOIN (\n"
+          + "    SELECT website_id, MAX(checked_at) AS last_checked\n"
+          + "    FROM certificates\n"
+          + "    GROUP BY website_id\n"
+          + ") latest ON w.id = latest.website_id\n"
+          + "LEFT JOIN certificates c ON w.id = c.website_id AND c.checked_at = latest.last_checked\n"
+          + "ORDER BY w.id";
   private static final String CHECK_Sql = "SELECT id FROM websites WHERE url = ?";
 
   public WebsiteDao() {
@@ -91,7 +96,7 @@ public class WebsiteDao {
         Statement stmt = conn.createStatement();
         ResultSet rs = stmt.executeQuery(SELECT_ALL_SQL)) {
 
-      System.out.println("Executing query: " + SELECT_ALL_SQL); // Логирование
+      System.out.println("Executing query: " + SELECT_ALL_SQL);
       while (rs.next()) {
         Website website = new Website(
             rs.getInt("id"),
@@ -99,12 +104,15 @@ public class WebsiteDao {
             rs.getString("schedule")
         );
         website.setLastChecked(rs.getTimestamp("last_checked"));
-        website.setValidTo(rs.getTimestamp("valid_to"));
+        Timestamp validTo = rs.getTimestamp("valid_to");
+        if (!rs.wasNull()) { // Проверка на NULL
+          website.setValidTo(validTo);
+        }
         websites.add(website);
       }
-      System.out.println("Websites fetched from DB: " + websites.size()); // Логирование
+      System.out.println("Websites fetched from DB: " + websites.size());
     } catch (SQLException e) {
-      System.err.println("Error fetching websites: " + e.getMessage()); // Логирование ошибки
+      System.err.println("Error fetching websites: " + e.getMessage());
       e.printStackTrace();
     }
     return websites;
@@ -133,6 +141,18 @@ public class WebsiteDao {
       pstmt.executeUpdate();
     } catch (SQLException e) {
       e.printStackTrace();
+    }
+  }
+  public boolean checkIfWebsiteExists(String url) {
+    try (Connection conn = DriverManager.getConnection(JDBC_URL);
+        PreparedStatement pstmtCheck = conn.prepareStatement(CHECK_Sql)) {
+      pstmtCheck.setString(1, url);
+      ResultSet rs = pstmtCheck.executeQuery();
+      return rs.next();
+    } catch (SQLException e) {
+      System.err.println("Error checking website existence: " + e.getMessage());
+      e.printStackTrace();
+      return false;
     }
   }
 }

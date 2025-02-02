@@ -46,20 +46,26 @@ public class CertCheckScheduler {
 
       if (shouldCheckNow(website)) {
         try {
-          X509Certificate cert = CertUtils.retrieveCertificate(
-              website.getUrl());// Получаем сертификат
+          X509Certificate cert = CertUtils.retrieveCertificate(website.getUrl());
+          System.out.println("Certificate retrieved for: " + website.getUrl());
           cert.checkValidity(); // Проверяем валидность сертификата
+
           // Преобразуем сертификат в PEM
           String pem = convertToPem(cert);
+          System.out.println("PEM: " + pem);
 
           // Создаем объект CertificateInfo и сохраняем PEM
-          CertificateInfo certInfo = CertUtils.parseCertificate(
-              cert);
-          certInfo.setPem(pem);// Сохраняем PEM
-          certificateDao.saveCertificate(website.getId(), certInfo);
+          CertificateInfo certInfo = CertUtils.parseCertificate(cert);
+          System.out.println("CertificateInfo: " + certInfo);
+          certInfo.setPem(pem);
 
-          // Передаем JSON на бэкенд
-          sendCertificateToBackend(certInfo);
+          if (certInfo.getPem() == null) {
+            System.err.println("PEM is null for website ID: " + website.getId());
+            return;
+          }
+          // Сохраняем сертификат в базу данных
+          certificateDao.saveCertificate(website.getId(), certInfo);
+          System.out.println("Certificate saved for website ID: " + website.getId());
 
           // Обновляем время последней проверки
           website.setLastChecked(new java.sql.Timestamp(System.currentTimeMillis()));

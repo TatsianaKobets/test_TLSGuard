@@ -9,7 +9,8 @@ public class Website {
   private String schedule;
   private Timestamp lastChecked;
   private Timestamp validTo;
-
+  public Website() {
+  }
   public Website(int id, String url, String schedule) {
     this.id = id;
     this.url = url;

@@ -1,5 +1,7 @@
 package org.example.testtlsguard.handler;
 
+import static org.example.testtlsguard.Main.isValidUrl;
+
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -62,6 +64,19 @@ public class ApiHandler implements HttpHandler {
     String json = new String(is.readAllBytes());
     System.out.println("Received JSON: " + json); // Логирование полученного JSON
     Website website = parseJsonToWebsite(json);
+
+    // Проверка URL
+    if (!isValidUrl(website.getUrl())) {
+      sendResponse(exchange, "{\"error\":\"Invalid URL\"}", 400);
+      return;
+    }
+
+    // Проверяем, существует ли сайт уже в базе данных
+    if (websiteDao.checkIfWebsiteExists(website.getUrl())) {
+      sendResponse(exchange, "{\"error\":\"Website already exists\"}", 400);
+      return;
+    }
+
     websiteDao.addWebsite(website);
     sendResponse(exchange, "{\"status\":\"ok\"}", 200);
   }
@@ -81,6 +96,9 @@ public class ApiHandler implements HttpHandler {
 
   private void sendResponse(HttpExchange exchange, String response, int statusCode) throws IOException {
     exchange.getResponseHeaders().add("Content-Type", "application/json");
+    exchange.getResponseHeaders().add("Access-Control-Allow-Origin", "*"); // Разрешить все домены
+    exchange.getResponseHeaders().add("Access-Control-Allow-Methods", "GET, POST, DELETE");
+    exchange.getResponseHeaders().add("Access-Control-Allow-Headers", "Content-Type");
     exchange.sendResponseHeaders(statusCode, response.getBytes().length);
     OutputStream os = exchange.getResponseBody();
     os.write(response.getBytes());
