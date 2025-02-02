@@ -4,13 +4,17 @@ import java.net.URL;
 import java.security.cert.Certificate;
 import java.security.cert.X509Certificate;
 import java.sql.Timestamp;
-import java.text.SimpleDateFormat;
-import java.util.Date;
+import java.util.Base64;
 import javax.net.ssl.HttpsURLConnection;
 import javax.net.ssl.SSLException;
 import org.example.testtlsguard.model.CertificateInfo;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 
 public class CertUtils {
+
+  private static final Logger logger = LoggerFactory.getLogger(CertUtils.class);
 
   public static CertificateInfo parseCertificate(X509Certificate cert) {
     CertificateInfo info = new CertificateInfo();
@@ -19,11 +23,8 @@ public class CertUtils {
     info.setValidFrom(new Timestamp(cert.getNotBefore().getTime()));
     info.setValidTo(new Timestamp(cert.getNotAfter().getTime()));
     info.setSerialNumber(cert.getSerialNumber().toString(16));
+    logger.debug("Parsed certificate info: {}", info);
     return info;
-  }
-
-  private static String formatDate(Timestamp date) {
-    return new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(date);
   }
 
   public static X509Certificate retrieveCertificate(String urlStr) throws Exception {
@@ -35,8 +36,18 @@ public class CertUtils {
 
     Certificate[] certs = conn.getServerCertificates();
     if (certs.length > 0 && certs[0] instanceof X509Certificate) {
+      logger.info("Successfully retrieved certificate from: {}", urlStr);
       return (X509Certificate) certs[0];
     }
+    logger.error("No X509Certificate found for URL: {}", urlStr);
     throw new SSLException("No X509Certificate found");
+  }
+
+  public String convertToPem(X509Certificate certificate) throws Exception {
+    Base64.Encoder encoder = Base64.getMimeEncoder(64, System.lineSeparator().getBytes());
+    String encodedCert = encoder.encodeToString(certificate.getEncoded());
+    return "-----BEGIN CERTIFICATE-----" + System.lineSeparator() +
+        encodedCert + System.lineSeparator() +
+        "-----END CERTIFICATE-----";
   }
 }

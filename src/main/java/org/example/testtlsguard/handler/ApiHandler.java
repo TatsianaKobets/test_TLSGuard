@@ -20,90 +20,110 @@ import org.example.testtlsguard.dao.WebsiteDao;
 import org.example.testtlsguard.model.CertificateInfo;
 import org.example.testtlsguard.model.Website;
 import org.example.testtlsguard.util.CertUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class ApiHandler implements HttpHandler {
 
+  private static final Logger logger = LoggerFactory.getLogger(ApiHandler.class);
+
   private final WebsiteDao websiteDao = new WebsiteDao();
-  private final CertificateDao certificateDao = new CertificateDao(); // Добавлен CertificateDao
+  private final CertificateDao certificateDao = new CertificateDao();
   private static final ObjectMapper objectMapper = new ObjectMapper();
 
   @Override
   public void handle(HttpExchange exchange) throws IOException {
     try {
-      if ("GET".equals(exchange.getRequestMethod())) {
-        handleGet(exchange); // Обработка GET-запросов
-      } else if ("POST".equals(exchange.getRequestMethod())) {
-        // Определяем, какой тип POST-запроса
-        String path = exchange.getRequestURI().getPath();
-        if (path.equals("/api/websites")) {
-          handlePost(exchange); // Обработка добавления сайта
-        } else if (path.equals("/api/certificates")) {
-          handleCertificatePost(exchange); // Обработка сохранения сертификата
-        } else {
-          sendResponse(exchange, "{\"error\":\"Invalid endpoint\"}", 404);
-        }
-      } else if ("DELETE".equals(exchange.getRequestMethod())) {
-        handleDelete(exchange); // Обработка DELETE-запросов
-      } else {
-        sendResponse(exchange, "{\"error\":\"Method not allowed\"}", 405);
+      String method = exchange.getRequestMethod();
+      String path = exchange.getRequestURI().getPath();
+
+      logger.debug("Handling {} request for path: {}", method, path);
+
+      switch (method) {
+        case "GET":
+          handleGet(exchange);
+          break;
+        case "POST":
+          if (path.equals("/api/websites")) {
+            handlePost(exchange);
+          } else if (path.equals("/api/certificates")) {
+            handleCertificatePost(exchange);
+          } else {
+            sendResponse(exchange, "{\"error\":\"Invalid endpoint\"}", 404);
+          }
+          break;
+        case "DELETE":
+          handleDelete(exchange);
+          break;
+        default:
+          sendResponse(exchange, "{\"error\":\"Method not allowed\"}", 405);
+          break;
       }
     } catch (Exception e) {
+      logger.error("Error handling request: {}", e.getMessage(), e);
       sendResponse(exchange, "{\"error\":\"" + e.getMessage() + "\"}", 500);
     }
   }
 
   private void handleGet(HttpExchange exchange) throws IOException {
+    logger.info("Handling GET request to fetch all websites.");
     List<Website> websites = websiteDao.getAllWebsites();
     String response = convertToJson(websites);
-    System.out.println("Response: " + response);
+    logger.debug("Response: {}", response);
     sendResponse(exchange, response, 200);
   }
 
   private void handlePost(HttpExchange exchange) throws IOException {
+    logger.info("Handling POST request to add a new website.");
     InputStream is = exchange.getRequestBody();
     String json = new String(is.readAllBytes());
-    System.out.println("Received JSON: " + json); // Логирование полученного JSON
+    logger.debug("Received JSON: {}", json);
+
     Website website = parseJsonToWebsite(json);
 
-    // Проверка URL
     if (!isValidUrl(website.getUrl())) {
+      logger.warn("Invalid URL provided: {}", website.getUrl());
       sendResponse(exchange, "{\"error\":\"Invalid URL\"}", 400);
       return;
     }
 
-    // Проверяем, существует ли сайт уже в базе данных
     if (websiteDao.checkIfWebsiteExists(website.getUrl())) {
+      logger.warn("Website already exists: {}", website.getUrl());
       sendResponse(exchange, "{\"error\":\"Website already exists\"}", 400);
       return;
     }
 
     websiteDao.addWebsite(website);
+    logger.info("Website added successfully: {}", website.getUrl());
     sendResponse(exchange, "{\"status\":\"ok\"}", 200);
   }
 
   private void handleCertificatePost(HttpExchange exchange) throws IOException {
+    logger.info("Handling POST request to add a new certificate.");
     InputStream is = exchange.getRequestBody();
     String json = new String(is.readAllBytes());
+    logger.debug("Received JSON: {}", json);
+
     try {
       CertificateInfo certInfo = parseJsonCertificate(json);
+      certificateDao.saveCertificate(1, certInfo);
 
-      // Сохраняем информацию о сертификате в базе данных
-      certificateDao.saveCertificate(1, certInfo); // Используйте ваш DAO (websiteId = 1 для примера)
-
-      // Перезагружаем данные из базы данных
       List<Website> updatedWebsites = websiteDao.getAllWebsites();
       String response = convertToJson(updatedWebsites);
 
-      // Отправляем обновленный JSON-ответ
+      logger.debug("Updated websites after adding certificate: {}", response);
       sendResponse(exchange, response, 200);
     } catch (Exception e) {
+      logger.error("Error parsing or saving certificate: {}", e.getMessage(), e);
       sendResponse(exchange, "{\"error\":\"" + e.getMessage() + "\"}", 400);
     }
   }
 
-  private void sendResponse(HttpExchange exchange, String response, int statusCode) throws IOException {
+  private void sendResponse(HttpExchange exchange, String response, int statusCode)
+      throws IOException {
+    logger.debug("Sending response with status code {}: {}", statusCode, response);
     exchange.getResponseHeaders().add("Content-Type", "application/json");
-    exchange.getResponseHeaders().add("Access-Control-Allow-Origin", "*"); // Разрешить все домены
+    exchange.getResponseHeaders().add("Access-Control-Allow-Origin", "*");
     exchange.getResponseHeaders().add("Access-Control-Allow-Methods", "GET, POST, DELETE");
     exchange.getResponseHeaders().add("Access-Control-Allow-Headers", "Content-Type");
     exchange.sendResponseHeaders(statusCode, response.getBytes().length);
@@ -114,25 +134,27 @@ public class ApiHandler implements HttpHandler {
 
   private String convertToJson(List<Website> websites) throws JsonProcessingException {
     String json = objectMapper.writeValueAsString(websites);
-    System.out.println("JSON output: " + json); // Log the JSON output
+    logger.debug("Converted websites to JSON: {}", json);
     return json;
   }
 
   private Website parseJsonToWebsite(String json) throws IOException {
+    logger.debug("Parsing JSON to Website object: {}", json);
     return objectMapper.readValue(json, Website.class);
   }
 
   private void handleDelete(HttpExchange exchange) throws IOException {
+    logger.info("Handling DELETE request to clear all websites.");
     websiteDao.clearAllWebsites();
     sendResponse(exchange, "{\"status\":\"ok\"}", 200);
   }
 
   private CertificateInfo parseJsonCertificate(String json)
       throws IOException, CertificateException {
+    logger.debug("Parsing JSON to CertificateInfo object: {}", json);
     JsonNode rootNode = objectMapper.readTree(json);
     String pem = rootNode.get("pem").asText();
 
-    // Преобразуем PEM обратно в X509Certificate
     CertificateFactory factory = CertificateFactory.getInstance("X.509");
     X509Certificate certificate = (X509Certificate) factory.generateCertificate(
         new ByteArrayInputStream(pem.getBytes())

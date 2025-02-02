@@ -13,7 +13,7 @@ body {
   background: white;
   padding: 20px;
   border-radius: 8px;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
   margin-bottom: 20px;
 }
 
@@ -25,32 +25,32 @@ input, select, button {
 }
 
 button {
-  background: #007bff; /* Цвет для остальных кнопок */
+  background: #007bff;
   color: white;
   border: none;
   cursor: pointer;
 }
 
 button:hover {
-  background: #0056b3; /* Более темный синий цвет при наведении */
+  background: #0056b3;
 }
 
 button.red {
-  background: #dc3545; /* Красный цвет для кнопки удаления */
+  background: #dc3545;
   color: white;
   border: none;
   cursor: pointer;
 }
 
 button.red:hover {
-  background: #c82333; /* Более темный красный при наведении */
+  background: #c82333;
 }
 
 .results {
   background: white;
   padding: 20px;
   border-radius: 8px;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 table {

@@ -12,28 +12,38 @@
     <maven.compiler.source>17</maven.compiler.source>
     <maven.compiler.target>17</maven.compiler.target>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-
+    <h2>2.1.214</h2>
+    <jackson-databind>2.13.4</jackson-databind>
+    <bcpkix-jdk15on>1.70</bcpkix-jdk15on>
+    <slf4j-api>2.0.16</slf4j-api>
+    <logback-classic>1.4.14</logback-classic>
   </properties>
   <dependencies>
-    <!-- H2 Database -->
     <dependency>
       <groupId>com.h2database</groupId>
       <artifactId>h2</artifactId>
-      <version>2.1.214</version>
+      <version>${h2}</version>
     </dependency>
 
-    <!-- JSON Processing -->
     <dependency>
       <groupId>com.fasterxml.jackson.core</groupId>
       <artifactId>jackson-databind</artifactId>
-      <version>2.13.4</version>
+      <version>${jackson-databind}</version>
     </dependency>
-
-    <!-- Bouncy Castle -->
     <dependency>
       <groupId>org.bouncycastle</groupId>
       <artifactId>bcpkix-jdk15on</artifactId>
-      <version>1.70</version>
+      <version>${bcpkix-jdk15on}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.slf4j</groupId>
+      <artifactId>slf4j-api</artifactId>
+      <version>${slf4j-api}</version>
+    </dependency>
+    <dependency>
+      <groupId>ch.qos.logback</groupId>
+      <artifactId>logback-classic</artifactId>
+      <version>${logback-classic}</version>
     </dependency>
   </dependencies>
 </project>

@@ -1,29 +1,28 @@
 package org.example.testtlsguard.scheduler;
 
-import java.io.IOException;
-import java.net.URL;
-import java.security.cert.Certificate;
 import java.security.cert.CertificateExpiredException;
 import java.security.cert.CertificateNotYetValidException;
 import java.security.cert.X509Certificate;
 import java.sql.Timestamp;
-import java.util.Base64;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
-import javax.net.ssl.HttpsURLConnection;
-import javax.net.ssl.SSLException;
 import org.example.testtlsguard.dao.CertificateDao;
 import org.example.testtlsguard.dao.WebsiteDao;
 import org.example.testtlsguard.model.CertificateInfo;
 import org.example.testtlsguard.model.Website;
 import org.example.testtlsguard.util.CertUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class CertCheckScheduler {
+
+  private static final Logger logger = LoggerFactory.getLogger(CertCheckScheduler.class);
 
   private final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
   private final WebsiteDao websiteDao;
   private final CertificateDao certificateDao;
+  private final CertUtils certUtils = new CertUtils();
 
   public CertCheckScheduler(WebsiteDao websiteDao, CertificateDao certificateDao) {
     this.websiteDao = websiteDao;
@@ -31,69 +30,69 @@ public class CertCheckScheduler {
   }
 
   public void start() {
-    // Запускаем проверку каждую минуту
     scheduler.scheduleAtFixedRate(this::checkCertificates, 0, 1, TimeUnit.MINUTES);
-    System.out.println("Scheduler started");
+    logger.info("Scheduler started successfully.");
   }
 
   private void checkCertificates() {
-    System.out.println("Checking certificates for all websites");
+    logger.info("Starting certificate check for all websites.");
     websiteDao.getAllWebsites().forEach(website -> {
       if (website.getUrl() == null || website.getUrl().isEmpty()) {
-        System.err.println("URL is null or empty for website ID: " + website.getId());
+        logger.warn("URL is null or empty for website ID: {}", website.getId());
         return;
       }
 
       if (shouldCheckNow(website)) {
         try {
+          logger.debug("Checking certificate for website: {}", website.getUrl());
           X509Certificate cert = CertUtils.retrieveCertificate(website.getUrl());
-          System.out.println("Certificate retrieved for: " + website.getUrl());
-          cert.checkValidity(); // Проверяем валидность сертификата
+          logger.info("Certificate retrieved successfully for: {}", website.getUrl());
 
-          // Преобразуем сертификат в PEM
-          String pem = convertToPem(cert);
-          System.out.println("PEM: " + pem);
+          cert.checkValidity();
+          logger.debug("Certificate is valid for: {}", website.getUrl());
 
-          // Создаем объект CertificateInfo и сохраняем PEM
+          String pem = certUtils.convertToPem(cert);
+          logger.debug("PEM generated for: {}", website.getUrl());
+
           CertificateInfo certInfo = CertUtils.parseCertificate(cert);
-          System.out.println("CertificateInfo: " + certInfo);
           certInfo.setPem(pem);
 
           if (certInfo.getPem() == null) {
-            System.err.println("PEM is null for website ID: " + website.getId());
+            logger.error("PEM is null for website ID: {}", website.getId());
             return;
           }
 
-          // Сохраняем сертификат в базу данных
           certificateDao.saveCertificate(website.getId(), certInfo);
-          System.out.println("Certificate saved for website ID: " + website.getId());
+          logger.info("Certificate saved successfully for website ID: {}", website.getId());
 
-          // Обновляем время последней проверки
-          website.setLastChecked(new java.sql.Timestamp(System.currentTimeMillis()));
-          website.setValidTo(certInfo.getValidTo()); // Обновляем validTo
+          website.setLastChecked(new Timestamp(System.currentTimeMillis()));
+          website.setValidTo(certInfo.getValidTo());
           websiteDao.updateLastChecked(website.getId(), website.getLastChecked());
 
           if (website.getValidTo() != null) {
-System.out.println("Обновляем validTo в базе данных: " + website.getValidTo());
+            logger.debug("Updated validTo in database: {}", website.getValidTo());
           }
-              website.getValidTo(); // Обновляем validTo в базе данных
 
         } catch (CertificateExpiredException e) {
-          System.err.println("Certificate expired for " + website.getUrl());
+          logger.error("Certificate expired for {}: {}", website.getUrl(), e.getMessage());
         } catch (CertificateNotYetValidException e) {
-          System.err.println("Certificate not yet valid for " + website.getUrl());
+          logger.error("Certificate not yet valid for {}: {}", website.getUrl(), e.getMessage());
         } catch (Exception e) {
-          System.err.println("Error checking certificate for " + website.getUrl());
-          e.printStackTrace();
+          logger.error("Error checking certificate for {}: {}", website.getUrl(), e.getMessage(),
+              e);
         }
+      } else {
+        logger.debug("Skipping check for website ID: {} (not yet due)", website.getId());
       }
     });
+    logger.info("Certificate check completed.");
   }
 
   private boolean shouldCheckNow(Website website) {
     Timestamp lastChecked = website.getLastChecked();
     if (lastChecked == null) {
-      return true; // Если проверка никогда не выполнялась, выполняем её
+      logger.debug("First check for website ID: {}", website.getId());
+      return true;
     }
 
     long currentTime = System.currentTimeMillis();
@@ -102,64 +101,16 @@ System.out.println("Обновляем validTo в базе данных: " + web
 
     switch (website.getSchedule()) {
       case "minutely":
-        return timeSinceLastCheck >= TimeUnit.MINUTES.toMillis(1); // Каждую минуту
+        return timeSinceLastCheck >= TimeUnit.MINUTES.toMillis(1);
       case "hourly":
-        return timeSinceLastCheck >= TimeUnit.HOURS.toMillis(1); // Каждый час
+        return timeSinceLastCheck >= TimeUnit.HOURS.toMillis(1);
       case "daily":
-        return timeSinceLastCheck >= TimeUnit.DAYS.toMillis(1); // Ежедневно
+        return timeSinceLastCheck >= TimeUnit.DAYS.toMillis(1);
       case "weekly":
-        return timeSinceLastCheck >= TimeUnit.DAYS.toMillis(7); // Еженедельно
+        return timeSinceLastCheck >= TimeUnit.DAYS.toMillis(7);
       default:
+        logger.warn("Invalid schedule for website ID: {}", website.getId());
         return false;
     }
-  }
-
-  private X509Certificate retrieveCertificate(String url) throws Exception {
-    try {
-      // Создаем URL-объект
-      URL targetUrl = new URL(url);
-
-      // Открываем HTTPS-соединение
-      HttpsURLConnection connection = (HttpsURLConnection) targetUrl.openConnection();
-      connection.setConnectTimeout(5000); // Таймаут соединения
-      connection.setReadTimeout(5000);    // Таймаут чтения
-      connection.connect();
-
-      // Получаем сертификаты из соединения
-      Certificate[] certificates = connection.getServerCertificates();
-      if (certificates == null || certificates.length == 0) {
-        throw new SSLException("No certificates found for URL: " + url);
-      }
-
-      // Берем первый сертификат (обычно это сертификат сервера)
-      Certificate certificate = certificates[0];
-      if (certificate instanceof X509Certificate) {
-        return (X509Certificate) certificate;
-      } else {
-        throw new SSLException("The certificate is not an X509Certificate for URL: " + url);
-      }
-    } catch (IOException e) {
-      throw new Exception("Failed to retrieve certificate for URL: " + url, e);
-    }
-  }
-
-  private String convertToPem(X509Certificate certificate) throws Exception {
-    Base64.Encoder encoder = Base64.getMimeEncoder(64, System.lineSeparator().getBytes());
-    String encodedCert = encoder.encodeToString(certificate.getEncoded());
-    return "-----BEGIN CERTIFICATE-----" + System.lineSeparator() +
-        encodedCert + System.lineSeparator() +
-        "-----END CERTIFICATE-----";
-  }
-
-  private void sendCertificateToBackend(CertificateInfo certInfo) {
-    // Реализация отправки JSON на бэкенд
-    // Пример: отправляем через HTTP POST
-    String json = convertToJson(certInfo);
-    // Используйте вашу библиотеку для отправки HTTP-запроса
-  }
-
-  private String convertToJson(CertificateInfo certInfo) {
-    // Метод для преобразования CertificateInfo в JSON
-    return "{\"pem\": \"" + certInfo.getPem().replace("\n", "\\n") + "\"}";
   }
 }

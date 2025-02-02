@@ -1,5 +1,14 @@
 package org.example.testtlsguard.dao;
 
+import static org.example.testtlsguard.util.DatabaseConstants.CHECK_WEBSITE_BY_URL;
+import static org.example.testtlsguard.util.DatabaseConstants.CREATE_WEBSITES_TABLE_SQL;
+import static org.example.testtlsguard.util.DatabaseConstants.DELETE_ALL_CERTIFICATES_SQL;
+import static org.example.testtlsguard.util.DatabaseConstants.DELETE_ALL_WEBSITES_SQL;
+import static org.example.testtlsguard.util.DatabaseConstants.INSERT_WEBSITE_SQL;
+import static org.example.testtlsguard.util.DatabaseConstants.JDBC_URL;
+import static org.example.testtlsguard.util.DatabaseConstants.SELECT_ALL_WEBSITES_SQL;
+import static org.example.testtlsguard.util.DatabaseConstants.UPDATE_LAST_CHECKED_DATE_BY_ID;
+
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
@@ -10,84 +19,63 @@ import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.List;
 import org.example.testtlsguard.model.Website;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class WebsiteDao {
 
-  private static final String JDBC_URL = "jdbc:h2:~/tls_checker_db";
-  private static final String CREATE_TABLE_SQL = "CREATE TABLE IF NOT EXISTS websites ("
-      + "id INT AUTO_INCREMENT PRIMARY KEY, "
-      + "url VARCHAR(255) NOT NULL UNIQUE, "
-      + "schedule VARCHAR(50) NOT NULL, "
-      + "last_checked TIMESTAMP)";
-
-  private static final String INSERT_SQL = "INSERT INTO websites(url, schedule) VALUES(?, ?)";
-  private static final String SELECT_ALL_SQL =
-      "SELECT w.id, w.url, w.schedule, c.checked_at AS last_checked, c.valid_to\n" +
-          "FROM websites w\n" +
-          "LEFT JOIN (\n" +
-          "    SELECT website_id, MAX(checked_at) AS last_checked\n" +
-          "    FROM certificates\n" +
-          "    GROUP BY website_id\n" +
-          ") latest ON w.id = latest.website_id\n" +
-          "LEFT JOIN certificates c ON w.id = c.website_id AND c.checked_at = latest.last_checked\n"
-          +
-          "ORDER BY w.id";
-  private static final String CHECK_Sql = "SELECT id FROM websites WHERE url = ?";
+  private static final Logger logger = LoggerFactory.getLogger(WebsiteDao.class);
 
   public WebsiteDao() {
     try (Connection conn = DriverManager.getConnection(JDBC_URL);
         Statement stmt = conn.createStatement()) {
-      System.out.println("Connected to database: " + JDBC_URL); // Логирование
-      stmt.execute(CREATE_TABLE_SQL);
-      System.out.println("Table 'websites' created or already exists.");
+      logger.info("Connected to database: {}", JDBC_URL);
+      stmt.execute(CREATE_WEBSITES_TABLE_SQL);
+      logger.info("Table 'websites' created successfully.");
 
-      // Проверка структуры таблицы
       ResultSet rs = conn.getMetaData().getColumns(null, null, "WEBSITES", null);
       while (rs.next()) {
         String columnName = rs.getString("COLUMN_NAME");
         String columnType = rs.getString("TYPE_NAME");
-        System.out.println("Column: " + columnName + ", Type: " + columnType);
+        logger.debug("Column: {}, Type: {}", columnName, columnType);
       }
     } catch (SQLException e) {
-      System.err.println("Error connecting to database: " + e.getMessage()); // Логирование ошибки
-      e.printStackTrace();
+      logger.error("Error connecting to database or creating table: {}", e.getMessage(), e);
     }
   }
 
   public void addWebsite(Website website) {
     if (website.getUrl() == null || website.getUrl().trim().isEmpty()) {
-      System.out.println("URL is required.");
+      logger.warn("URL is required. Website not added.");
       return;
     }
-    System.out.println(
-        "Adding website: " + website.getUrl() + ", Schedule: " + website.getSchedule());
+    logger.info("Attempting to add website: {}, Schedule: {}", website.getUrl(),
+        website.getSchedule());
 
     try (Connection conn = DriverManager.getConnection(JDBC_URL);
-        PreparedStatement pstmtCheck = conn.prepareStatement(CHECK_Sql)) {
+        PreparedStatement pstmtCheck = conn.prepareStatement(CHECK_WEBSITE_BY_URL)) {
 
       pstmtCheck.setString(1, website.getUrl());
       ResultSet rs = pstmtCheck.executeQuery();
 
       if (rs.next()) {
         int existingId = rs.getInt("id");
-        System.out.println(
-            "Website with URL " + website.getUrl() + " already exists. ID: " + existingId);
+        logger.info("Website with URL {} already exists. ID: {}", website.getUrl(), existingId);
         return;
       }
-      try (PreparedStatement pstmtInsert = conn.prepareStatement(INSERT_SQL)) {
+
+      try (PreparedStatement pstmtInsert = conn.prepareStatement(INSERT_WEBSITE_SQL)) {
         pstmtInsert.setString(1, website.getUrl());
         pstmtInsert.setString(2, website.getSchedule());
         int rowsInserted = pstmtInsert.executeUpdate();
-        System.out.println("Rows inserted: " + rowsInserted); // Логирование
         if (rowsInserted > 0) {
-          System.out.println("Website added: " + website.getUrl());
+          logger.info("Website added successfully: {}", website.getUrl());
         } else {
-          System.out.println("Failed to add website: " + website.getUrl());
+          logger.warn("Failed to add website: {}", website.getUrl());
         }
       }
     } catch (SQLException e) {
-      System.err.println("Error adding website: " + e.getMessage()); // Логирование ошибки
-      e.printStackTrace();
+      logger.error("Error adding website: {}", e.getMessage(), e);
     }
   }
 
@@ -95,9 +83,9 @@ public class WebsiteDao {
     List<Website> websites = new ArrayList<>();
     try (Connection conn = DriverManager.getConnection(JDBC_URL);
         Statement stmt = conn.createStatement();
-        ResultSet rs = stmt.executeQuery(SELECT_ALL_SQL)) {
+        ResultSet rs = stmt.executeQuery(SELECT_ALL_WEBSITES_SQL)) {
 
-      System.out.println("Executing query: " + SELECT_ALL_SQL);
+      logger.debug("Executing query: {}", SELECT_ALL_WEBSITES_SQL);
       while (rs.next()) {
         Website website = new Website(
             rs.getInt("id"),
@@ -106,55 +94,58 @@ public class WebsiteDao {
         );
         website.setLastChecked(rs.getTimestamp("last_checked"));
         Timestamp validTo = rs.getTimestamp("valid_to");
-        System.out.println("Valid to: " + validTo);
-        if (!rs.wasNull()) { // Проверка на NULL
+        if (!rs.wasNull()) {
           website.setValidTo(validTo);
         }
         websites.add(website);
       }
-      System.out.println("Websites fetched from DB: " + websites.size());
+      logger.info("Fetched {} websites from the database.", websites.size());
     } catch (SQLException e) {
-      System.err.println("Error fetching websites: " + e.getMessage());
-      e.printStackTrace();
+      logger.error("Error fetching websites: {}", e.getMessage(), e);
     }
     return websites;
   }
 
   public void clearAllWebsites() {
-    String deleteCertificatesSql = "DELETE FROM certificates"; // Удаляем все сертификаты
-    String deleteWebsitesSql = "DELETE FROM websites"; // Затем удаляем все сайты
     try (Connection conn = DriverManager.getConnection(JDBC_URL);
-        PreparedStatement pstmtDeleteCertificates = conn.prepareStatement(deleteCertificatesSql);
-        PreparedStatement pstmtDeleteWebsites = conn.prepareStatement(deleteWebsitesSql)) {
+        PreparedStatement pstmtDeleteCertificates = conn.prepareStatement(
+            DELETE_ALL_CERTIFICATES_SQL);
+        PreparedStatement pstmtDeleteWebsites = conn.prepareStatement(DELETE_ALL_WEBSITES_SQL)) {
 
-      pstmtDeleteCertificates.executeUpdate();
-      pstmtDeleteWebsites.executeUpdate();
+      int certificatesDeleted = pstmtDeleteCertificates.executeUpdate();
+      int websitesDeleted = pstmtDeleteWebsites.executeUpdate();
+      logger.info("Deleted {} certificates and {} websites.", certificatesDeleted, websitesDeleted);
     } catch (SQLException e) {
-      e.printStackTrace();
+      logger.error("Error clearing websites and certificates: {}", e.getMessage(), e);
     }
   }
 
   public void updateLastChecked(int websiteId, Timestamp lastChecked) {
-    String updateSql = "UPDATE websites SET last_checked = ? WHERE id = ?";
     try (Connection conn = DriverManager.getConnection(JDBC_URL);
-        PreparedStatement pstmt = conn.prepareStatement(updateSql)) {
+        PreparedStatement pstmt = conn.prepareStatement(UPDATE_LAST_CHECKED_DATE_BY_ID)) {
       pstmt.setTimestamp(1, lastChecked);
       pstmt.setInt(2, websiteId);
-      pstmt.executeUpdate();
+      int rowsUpdated = pstmt.executeUpdate();
+      if (rowsUpdated > 0) {
+        logger.info("Updated last checked date for website ID: {}", websiteId);
+      } else {
+        logger.warn("No website found with ID: {}", websiteId);
+      }
     } catch (SQLException e) {
-      e.printStackTrace();
+      logger.error("Error updating last checked date: {}", e.getMessage(), e);
     }
   }
 
   public boolean checkIfWebsiteExists(String url) {
     try (Connection conn = DriverManager.getConnection(JDBC_URL);
-        PreparedStatement pstmtCheck = conn.prepareStatement(CHECK_Sql)) {
+        PreparedStatement pstmtCheck = conn.prepareStatement(CHECK_WEBSITE_BY_URL)) {
       pstmtCheck.setString(1, url);
       ResultSet rs = pstmtCheck.executeQuery();
-      return rs.next();
+      boolean exists = rs.next();
+      logger.debug("Website with URL {} exists: {}", url, exists);
+      return exists;
     } catch (SQLException e) {
-      System.err.println("Error checking website existence: " + e.getMessage());
-      e.printStackTrace();
+      logger.error("Error checking website existence: {}", e.getMessage(), e);
       return false;
     }
   }

@@ -56,7 +56,7 @@
         }
         const text = await response.text();
         const websites = JSON.parse(text);
-        console.log("Websites received:", websites); // Log the received websites
+        console.log("Websites received:", websites);
         const tbody = document.querySelector('#websites tbody');
         tbody.innerHTML = '';
         websites.forEach(website => {
@@ -65,7 +65,7 @@
                     <td>${website.url}</td>
                     <td>${website.schedule}</td>
                     <td>${formatTimestamp(website.lastChecked)}</td>
-                    <td>${formatTimestamp(website.validTo)}</td> <!-- Применяем formatTimestamp для validTo -->
+                    <td>${formatTimestamp(website.validTo)}</td>
                 </tr>`;
           tbody.innerHTML += row;
         });
