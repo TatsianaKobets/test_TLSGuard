@@ -33,9 +33,14 @@ public class ApiHandler implements HttpHandler {
 
   private static final Logger logger = LoggerFactory.getLogger(ApiHandler.class);
 
-  private final WebsiteDao websiteDao = new WebsiteDao();
-  private final CertificateDao certificateDao = new CertificateDao();
+  private final WebsiteDao websiteDao;
+  private final CertificateDao certificateDao;
   private static final ObjectMapper objectMapper = new ObjectMapper();
+
+  public ApiHandler(WebsiteDao websiteDao, CertificateDao certificateDao) {
+    this.websiteDao = websiteDao;
+    this.certificateDao = certificateDao;
+  }
 
   /**
    * Handles the HTTP request and sends a response.

@@ -2,6 +2,8 @@ package org.example.testtlsguard;
 
 import com.sun.net.httpserver.HttpServer;
 import java.net.InetSocketAddress;
+import org.example.testtlsguard.dao.CertificateDao;
+import org.example.testtlsguard.dao.WebsiteDao;
 import org.example.testtlsguard.handler.ApiHandler;
 import org.example.testtlsguard.handler.StaticHandler;
 import org.slf4j.Logger;
@@ -14,10 +16,11 @@ import org.slf4j.LoggerFactory;
  * requests and one for static files.
  */
 public class Server {
-
   private static final Logger logger = LoggerFactory.getLogger(Server.class);
 
   private final HttpServer httpServer;
+  private final WebsiteDao websiteDao;
+  private final CertificateDao certificateDao;
 
   /**
    * Creates a new HTTP server on the specified port.
@@ -29,8 +32,11 @@ public class Server {
     logger.info("Creating HTTP server on port: {}", port);
     this.httpServer = HttpServer.create(new InetSocketAddress(port), 0);
 
+    this.websiteDao = new WebsiteDao();
+    this.certificateDao = new CertificateDao();
+
     logger.debug("Registering API handler at /api");
-    httpServer.createContext("/api", new ApiHandler());
+    httpServer.createContext("/api", new ApiHandler(websiteDao, certificateDao));
 
     logger.debug("Registering static handler at /");
     httpServer.createContext("/", new StaticHandler());

@@ -110,18 +110,15 @@
     }
 
     try {
-      const response = await fetch('/api/websites/reset', {
-        method: 'POST',
+      const response = await fetch('/api/websites', {
+        method: 'DELETE',
         headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({})
       });
-
       if (!response.ok) {
         const errorData = await response.json();
         alert(errorData.error || "Failed to reset websites");
         return;
       }
-
       loadWebsites();
     } catch (error) {
       console.error('Error resetting websites:', error);

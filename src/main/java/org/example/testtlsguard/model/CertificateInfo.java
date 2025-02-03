@@ -38,6 +38,16 @@ public class CertificateInfo {
   public CertificateInfo() {
   }
 
+  public CertificateInfo(String subject, String issuer, Timestamp validFrom, Timestamp validTo,
+      String serialNumber, String pem) {
+    this.subject = subject;
+    this.issuer = issuer;
+    this.validFrom = validFrom;
+    this.validTo = validTo;
+    this.serialNumber = serialNumber;
+    this.pem = pem;
+  }
+
   public String getSubject() {
     return subject;
   }
