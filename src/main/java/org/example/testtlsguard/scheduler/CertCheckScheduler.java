@@ -54,7 +54,7 @@ public class CertCheckScheduler {
   /**
    * Checks the certificates of all websites.
    */
-  private void checkCertificates() {
+  void checkCertificates() {
     logger.info("Starting certificate check for all websites.");
     websiteDao.getAllWebsites().forEach(website -> {
       if (website.getUrl() == null || website.getUrl().isEmpty()) {
