@@ -22,10 +22,21 @@ import org.example.testtlsguard.model.Website;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/**
+ * Data Access Object (DAO) for managing websites in the database.
+ *
+ * This class provides methods for adding, retrieving,
+ * and updating websites in the database.
+ */
 public class WebsiteDao {
 
   private static final Logger logger = LoggerFactory.getLogger(WebsiteDao.class);
 
+  /**
+   * Creates a new instance of the WebsiteDao class.
+   *
+   * Connect to the database and create the websites table if it does not exist.
+   */
   public WebsiteDao() {
     try (Connection conn = DriverManager.getConnection(JDBC_URL);
         Statement stmt = conn.createStatement()) {
@@ -44,6 +55,11 @@ public class WebsiteDao {
     }
   }
 
+  /**
+   * Adds a new website to the database.
+   *
+   * @param website the Website object containing the website details
+   */
   public void addWebsite(Website website) {
     if (website.getUrl() == null || website.getUrl().trim().isEmpty()) {
       logger.warn("URL is required. Website not added.");
@@ -79,6 +95,11 @@ public class WebsiteDao {
     }
   }
 
+  /**
+   * Retrieves all websites from the database.
+   *
+   * @return a list of Website objects representing the websites in the database
+   */
   public List<Website> getAllWebsites() {
     List<Website> websites = new ArrayList<>();
     try (Connection conn = DriverManager.getConnection(JDBC_URL);
@@ -106,6 +127,9 @@ public class WebsiteDao {
     return websites;
   }
 
+  /**
+   * Clears all websites and certificates from the database.
+   */
   public void clearAllWebsites() {
     try (Connection conn = DriverManager.getConnection(JDBC_URL);
         PreparedStatement pstmtDeleteCertificates = conn.prepareStatement(
@@ -120,6 +144,12 @@ public class WebsiteDao {
     }
   }
 
+  /**
+   * Updates the last checked date for a website.
+   *
+   * @param websiteId the ID of the website
+   * @param lastChecked the new last checked date
+   */
   public void updateLastChecked(int websiteId, Timestamp lastChecked) {
     try (Connection conn = DriverManager.getConnection(JDBC_URL);
         PreparedStatement pstmt = conn.prepareStatement(UPDATE_LAST_CHECKED_DATE_BY_ID)) {
@@ -136,6 +166,12 @@ public class WebsiteDao {
     }
   }
 
+  /**
+   * Checks if a website with the specified URL exists in the database.
+   *
+   * @param url the URL of the website
+   * @return true if the website exists, false otherwise
+   */
   public boolean checkIfWebsiteExists(String url) {
     try (Connection conn = DriverManager.getConnection(JDBC_URL);
         PreparedStatement pstmtCheck = conn.prepareStatement(CHECK_WEBSITE_BY_URL)) {

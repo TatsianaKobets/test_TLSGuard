@@ -13,16 +13,16 @@ import java.sql.Statement;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/**
+ * Provides utility methods for database operations.
+ *
+ * This class provides methods for establishing a connection to the database,
+ * initializing the database, clearing the database, and dropping the database.
+ */
 public class DatabaseUtil {
 
   private static final Logger logger = LoggerFactory.getLogger(DatabaseUtil.class);
 
-  /**
-   * Создает соединение с базой данных.
-   *
-   * @return Connection объект соединения с базой данных.
-   * @throws SQLException если произошла ошибка при подключении.
-   */
   public static Connection getConnection() throws SQLException {
     logger.debug("Attempting to establish a connection to the database.");
     return DriverManager.getConnection(

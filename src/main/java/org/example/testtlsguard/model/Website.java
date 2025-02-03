@@ -2,12 +2,28 @@ package org.example.testtlsguard.model;
 
 import java.sql.Timestamp;
 
+/**
+ * Represents a website with its URL, schedule, and certificate information.
+ *
+ * This class provides a data model for a
+ * website, including its ID, URL, schedule, last checked timestamp,
+ * and valid to timestamp.
+ */
 public class Website {
 
   private int id;
   private String url;
+  /**
+   * The schedule for checking the website's certificate.
+   */
   private String schedule;
+  /**
+   * The timestamp when the website was last checked.
+   */
   private Timestamp lastChecked;
+  /**
+   * The timestamp when the website's certificate is valid to.
+   */
   private Timestamp validTo;
 
   public Website() {

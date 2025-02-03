@@ -14,10 +14,20 @@ import org.example.testtlsguard.model.CertificateInfo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/**
+ * Data Access Object (DAO) for managing certificates in the database.
+ *
+ * This class provides methods for creating the certificates table
+ * and saving certificates to the database.
+ *
+ */
 public class CertificateDao {
 
   private static final Logger logger = LoggerFactory.getLogger(CertificateDao.class);
 
+  /**
+   * Connect to the database and create the certificates table if it does not exist
+   */
   public CertificateDao() {
     try (Connection conn = DriverManager.getConnection(JDBC_URL);
         Statement stmt = conn.createStatement()) {
@@ -29,6 +39,12 @@ public class CertificateDao {
     }
   }
 
+  /**
+   * Saves a certificate to the database for the specified website ID.
+   *
+   * @param websiteId the ID of the website associated with the certificate
+   * @param certInfo the CertificateInfo object containing the certificate details
+   */
   public void saveCertificate(int websiteId, CertificateInfo certInfo) {
     if (certInfo == null) {
       logger.warn("CertificateInfo is null. Certificate not saved.");

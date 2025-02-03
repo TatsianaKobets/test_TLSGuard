@@ -15,25 +15,45 @@ import org.example.testtlsguard.util.CertUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/**
+ * Schedules certificate checks for websites at regular intervals.
+ *
+ * This class provides a scheduler that checks the certificates of websites at regular intervals, based on their schedule.
+ */
 public class CertCheckScheduler {
 
   private static final Logger logger = LoggerFactory.getLogger(CertCheckScheduler.class);
 
+  /**
+   * The scheduled executor service for scheduling tasks.
+   */
   private final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
   private final WebsiteDao websiteDao;
   private final CertificateDao certificateDao;
   private final CertUtils certUtils = new CertUtils();
 
+  /**
+   * Creates a new certificate check scheduler with the given website and certificate DAOs.
+   *
+   * @param websiteDao the DAO for accessing website data
+   * @param certificateDao the DAO for accessing certificate data
+   */
   public CertCheckScheduler(WebsiteDao websiteDao, CertificateDao certificateDao) {
     this.websiteDao = websiteDao;
     this.certificateDao = certificateDao;
   }
 
+  /**
+   * Starts the scheduler.
+   */
   public void start() {
     scheduler.scheduleAtFixedRate(this::checkCertificates, 0, 1, TimeUnit.MINUTES);
     logger.info("Scheduler started successfully.");
   }
 
+  /**
+   * Checks the certificates of all websites.
+   */
   private void checkCertificates() {
     logger.info("Starting certificate check for all websites.");
     websiteDao.getAllWebsites().forEach(website -> {
@@ -88,6 +108,12 @@ public class CertCheckScheduler {
     logger.info("Certificate check completed.");
   }
 
+  /**
+   * Determines whether a certificate check should be performed for the given website.
+   *
+   * @param website the website to check
+   * @return true if a certificate check should be performed, false otherwise
+   */
   private boolean shouldCheckNow(Website website) {
     Timestamp lastChecked = website.getLastChecked();
     if (lastChecked == null) {

@@ -9,10 +9,24 @@ import org.example.testtlsguard.util.DatabaseUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/**
+ * The main entry point of the application.
+ * <p>
+ * This class is responsible for starting the application, dropping the existing database, adding a
+ * new website, starting the server, and scheduling certificate checks.
+ */
 public class Main {
 
   private static final Logger logger = LoggerFactory.getLogger(Main.class);
 
+  /**
+   * The main entry point of the application.
+   * <p>
+   * Starts the application, drops the existing database, adds a new website, starts the server, and
+   * schedules certificate checks.
+   *
+   * @param args command-line arguments (not used)
+   */
   public static void main(String[] args) {
     try {
       logger.info("Starting application...");
@@ -41,10 +55,10 @@ public class Main {
   }
 
   /**
-   * Проверяет, является ли строка допустимым URL.
+   * Checks if a given string is a valid URL.
    *
-   * @param url строка для проверки.
-   * @return true, если строка является допустимым URL, иначе false.
+   * @param url the string to check
+   * @return true if the string is a valid URL, false otherwise
    */
   public static boolean isValidUrl(String url) {
     try {

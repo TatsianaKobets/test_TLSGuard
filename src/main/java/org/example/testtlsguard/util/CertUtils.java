@@ -11,11 +11,22 @@ import org.example.testtlsguard.model.CertificateInfo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-
+/**
+ * Provides utility methods for certificate-related operations.
+ * <p>
+ * This class provides utility methods for parsing X509 certificates, retrieving certificates from
+ * URLs, and converting certificates to PEM format.
+ */
 public class CertUtils {
 
   private static final Logger logger = LoggerFactory.getLogger(CertUtils.class);
 
+  /**
+   * Parses the given X509 certificate and returns a CertificateInfo object.
+   *
+   * @param cert the X509 certificate to parse
+   * @return the parsed CertificateInfo object
+   */
   public static CertificateInfo parseCertificate(X509Certificate cert) {
     CertificateInfo info = new CertificateInfo();
     info.setSubject(cert.getSubjectX500Principal().getName());
@@ -27,6 +38,13 @@ public class CertUtils {
     return info;
   }
 
+  /**
+   * Retrieves an X509 certificate from the given URL.
+   *
+   * @param urlStr the URL to retrieve the certificate from
+   * @return the retrieved X509 certificate
+   * @throws Exception if an error occurs during retrieval
+   */
   public static X509Certificate retrieveCertificate(String urlStr) throws Exception {
     URL url = new URL(urlStr);
     HttpsURLConnection conn = (HttpsURLConnection) url.openConnection();
@@ -43,6 +61,13 @@ public class CertUtils {
     throw new SSLException("No X509Certificate found");
   }
 
+  /**
+   * Converts the given X509 certificate to PEM format.
+   *
+   * @param certificate the X509 certificate to convert
+   * @return the converted certificate in PEM format
+   * @throws Exception if an error occurs during conversion
+   */
   public String convertToPem(X509Certificate certificate) throws Exception {
     Base64.Encoder encoder = Base64.getMimeEncoder(64, System.lineSeparator().getBytes());
     String encodedCert = encoder.encodeToString(certificate.getEncoded());

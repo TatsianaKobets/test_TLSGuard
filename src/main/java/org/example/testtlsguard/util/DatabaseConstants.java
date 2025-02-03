@@ -1,5 +1,11 @@
 package org.example.testtlsguard.util;
 
+/**
+ * Provides database-related constants and SQL queries.
+ * <p>
+ * This class provides constants for database connection properties, table names, and SQL queries
+ * for creating and manipulating tables.
+ */
 public class DatabaseConstants {
 
   public static final String JDBC_URL = "jdbc:h2:~/tls_checker_db";
@@ -8,7 +14,7 @@ public class DatabaseConstants {
 
   public static final String TABLE_WEBSITES = "websites";
   public static final String TABLE_CERTIFICATES = "certificates";
-public static final String DROP_ALL_OBJECTS_DELETE_FILES = "DROP ALL OBJECTS DELETE FILES";
+  public static final String DROP_ALL_OBJECTS_DELETE_FILES = "DROP ALL OBJECTS DELETE FILES";
   public static final String CREATE_WEBSITES_TABLE_SQL = "CREATE TABLE IF NOT EXISTS websites ("
       + "id INT AUTO_INCREMENT PRIMARY KEY, "
       + "url VARCHAR(255) NOT NULL UNIQUE, "

@@ -12,6 +12,12 @@ import java.nio.file.Paths;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/**
+ * Serves static files from a specified directory.
+ * <p>
+ * This class implements the HttpHandler interface and provides methods for serving static files
+ * from a specified directory.
+ */
 public class StaticHandler implements HttpHandler {
 
   private static final Logger logger = LoggerFactory.getLogger(StaticHandler.class);
@@ -20,6 +26,15 @@ public class StaticHandler implements HttpHandler {
   private static final String DEFAULT_FILE = "index.html";
   private static final String CONTENT_TYPE_HEADER = "Content-Type";
 
+  /**
+   * Handles the HTTP request and sends a response.
+   * <p>
+   * Called by the HTTP server to handle incoming requests. It retrieves the request path,
+   * determines the resource path, and serves the corresponding file.
+   *
+   * @param exchange the HTTP exchange object
+   * @throws IOException if an I/O error occurs
+   */
   @Override
   public void handle(HttpExchange exchange) throws IOException {
     String requestPath = exchange.getRequestURI().getPath();
@@ -61,6 +76,14 @@ public class StaticHandler implements HttpHandler {
     }
   }
 
+  /**
+   * Determines the content type for a file.
+   * <p>
+   * Uses the Files.probeContentType method to determine the content type for a file.
+   *
+   * @param filename the name of the file
+   * @return the content type
+   */
   private String determineContentType(String filename) {
     try {
       Path path = Paths.get(filename);
@@ -72,6 +95,15 @@ public class StaticHandler implements HttpHandler {
     }
   }
 
+  /**
+   * Sends a 404 response.
+   * <p>
+   * Sends a response with a status code of 404 and a message indicating that the resource was not
+   * found.
+   *
+   * @param exchange the HTTP exchange object
+   * @throws IOException if an I/O error occurs
+   */
   private void send404(HttpExchange exchange) throws IOException {
     String response = "Resource not found";
     logger.warn("Sending 404 response: {}", response);
@@ -81,6 +113,15 @@ public class StaticHandler implements HttpHandler {
     }
   }
 
+  /**
+   * Sends a 500 response.
+   * <p>
+   * Sends a response with a status code of 500 and a message indicating that an internal server
+   * error occurred.
+   *
+   * @param exchange the HTTP exchange object
+   * @throws IOException if an I/O error occurs
+   */
   private void send500(HttpExchange exchange) throws IOException {
     String response = "Internal server error";
     logger.error("Sending 500 response: {}", response);
