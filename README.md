@@ -1,6 +1,6 @@
 # test_TLSGuard
 Performing a test task
-## инструкциями по запуску
+## инструкция по запуску
 ### Требования
 - Java 17
 - Maven
